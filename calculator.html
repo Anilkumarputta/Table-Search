@@ -212,7 +212,7 @@
             constructor(previousOperandElement, currentOperandElement) {
                 this.previousOperandElement = previousOperandElement;
                 this.currentOperandElement = currentOperandElement;
-                this.PRECISION_MULTIPLIER = 100000000;
+                this.PRECISION_MULTIPLIER = 1e8; // 100000000 for floating-point precision
                 this.clear();
             }
 
