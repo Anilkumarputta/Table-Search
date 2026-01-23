@@ -1,5 +1,3 @@
-````markdown
-```markdown
 # Table Search — Fullstack (FTS, fuzzy, edit, avatars)
 
 This repo contains a fullstack example: an Express + SQLite backend and a static frontend in public/.
@@ -80,4 +78,3 @@ Simply open `calculator.html` in any modern web browser. No installation or depe
 
 **Error Handling** - Shows "Error" for invalid operations (division by zero)
 ![Calculator Error State](https://github.com/user-attachments/assets/e9bfea5b-daa4-4442-abeb-4b1cac6fb1d7)
-```
