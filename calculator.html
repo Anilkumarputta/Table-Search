@@ -3,7 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Calculator</title>
+    <title>Simple Calculator - Modern & Beautiful</title>
+    
+    <!-- Meta tags for SEO and social sharing -->
+    <meta name="description" content="A beautiful, modern calculator with dark theme, full keyboard support, and calculation history. Features include basic arithmetic operations, percentage, and error handling.">
+    <meta name="keywords" content="calculator, modern calculator, online calculator, scientific calculator, dark theme calculator">
+    <meta name="author" content="Anilkumarputta">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Simple Calculator - Modern & Beautiful">
+    <meta property="og:description" content="A beautiful, modern calculator with dark theme and full keyboard support">
+    <meta property="og:image" content="https://github.com/user-attachments/assets/47d90ae1-973c-4156-8db8-8907b5c013f6">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Simple Calculator - Modern & Beautiful">
+    <meta property="twitter:description" content="A beautiful, modern calculator with dark theme and full keyboard support">
+    <meta property="twitter:image" content="https://github.com/user-attachments/assets/47d90ae1-973c-4156-8db8-8907b5c013f6">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23667eea'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='Arial, sans-serif' font-weight='bold'>🧮</text></svg>">
+    
     <style>
         * {
             margin: 0;
@@ -172,15 +193,174 @@
                 font-size: 1.2rem;
             }
         }
+
+        /* Copy button styles */
+        .copy-btn {
+            background: #2196F3;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .copy-btn:hover {
+            background: #1976D2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn.copied {
+            background: #4caf50;
+        }
+
+        /* History panel styles */
+        .history-panel {
+            background: #2d2d2d;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #444;
+        }
+
+        .history-title {
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .clear-history {
+            background: transparent;
+            border: none;
+            color: #f44336;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-history:hover {
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .history-item {
+            color: #aaa;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            border-radius: 6px;
+            background: #252525;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item:hover {
+            background: #333;
+            color: #fff;
+        }
+
+        .history-expression {
+            flex: 1;
+        }
+
+        .history-result {
+            color: #ff9500;
+            font-weight: 500;
+            margin-left: 1rem;
+        }
+
+        .history-empty {
+            color: #666;
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        /* Scrollbar styling */
+        .history-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-panel::-webkit-scrollbar-track {
+            background: #1e1e1e;
+            border-radius: 10px;
+        }
+
+        .history-panel::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 10px;
+        }
+
+        .history-panel::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        /* Container for calculator and layout */
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+
+            .calculator {
+                flex: 1;
+            }
+
+            .history-panel {
+                flex: 1;
+                max-height: 500px;
+                margin-bottom: 0;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="calculator">
-        <div class="display">
-            <div class="previous-operand" data-previous-operand></div>
-            <div class="current-operand" data-current-operand>0</div>
-        </div>
-        <div class="buttons">
+    <div class="container">
+        <div class="calculator">
+            <div class="display">
+                <div class="previous-operand" data-previous-operand></div>
+                <div class="current-operand" data-current-operand>0</div>
+            </div>
+            <button class="copy-btn" data-copy>📋 Copy Result</button>
+            <div class="buttons">
             <button class="clear" data-clear>C</button>
             <button class="delete" data-delete>DEL</button>
             <button class="operator" data-operation>%</button>
@@ -206,6 +386,18 @@
             <button class="equals" data-equals>=</button>
         </div>
     </div>
+    
+    <!-- History Panel -->
+    <div class="history-panel">
+        <div class="history-header">
+            <span class="history-title">📜 History</span>
+            <button class="clear-history" data-clear-history>Clear All</button>
+        </div>
+        <ul class="history-list" data-history-list>
+            <li class="history-empty">No calculations yet</li>
+        </ul>
+    </div>
+</div>
 
     <script>
         class Calculator {
@@ -213,6 +405,7 @@
                 this.previousOperandElement = previousOperandElement;
                 this.currentOperandElement = currentOperandElement;
                 this.PRECISION_MULTIPLIER = 1e8; // 100000000 for floating-point precision
+                this.history = []; // Store calculation history
                 this.clear();
             }
 
@@ -286,6 +479,9 @@
                 
                 if (isNaN(prev) || isNaN(current)) return;
 
+                // Store the expression before computation
+                const expression = `${this.getDisplayNumber(this.previousOperand)} ${this.operation} ${this.getDisplayNumber(this.currentOperand)}`;
+
                 switch (this.operation) {
                     case '+':
                         computation = prev + current;
@@ -302,6 +498,8 @@
                             this.previousOperand = '';
                             this.operation = undefined;
                             this.shouldResetScreen = true;
+                            // Add error to history
+                            this.addToHistory(expression, 'Error');
                             return;
                         }
                         computation = prev / current;
@@ -313,10 +511,43 @@
                 // Round to avoid floating point errors
                 computation = Math.round(computation * this.PRECISION_MULTIPLIER) / this.PRECISION_MULTIPLIER;
                 
+                // Add to history
+                this.addToHistory(expression, computation.toString());
+                
                 this.currentOperand = computation.toString();
                 this.operation = undefined;
                 this.previousOperand = '';
                 this.shouldResetScreen = true;
+            }
+
+            addToHistory(expression, result) {
+                // Add to history array (max 20 items)
+                this.history.unshift({ expression, result, timestamp: Date.now() });
+                if (this.history.length > 20) {
+                    this.history.pop();
+                }
+                // Update history display
+                this.updateHistoryDisplay();
+            }
+
+            updateHistoryDisplay() {
+                const historyList = document.querySelector('[data-history-list]');
+                if (this.history.length === 0) {
+                    historyList.innerHTML = '<li class="history-empty">No calculations yet</li>';
+                    return;
+                }
+                
+                historyList.innerHTML = this.history.map(item => 
+                    `<li class="history-item" data-result="${item.result}">
+                        <span class="history-expression">${item.expression}</span>
+                        <span class="history-result">= ${this.getDisplayNumber(item.result)}</span>
+                    </li>`
+                ).join('');
+            }
+
+            clearHistory() {
+                this.history = [];
+                this.updateHistoryDisplay();
             }
 
             getDisplayNumber(number) {
@@ -454,6 +685,56 @@
                 e.preventDefault(); // Prevent browser back navigation
                 calculator.delete();
                 calculator.updateDisplay();
+            }
+        });
+
+        // Copy button event listener
+        document.querySelector('[data-copy]').addEventListener('click', () => {
+            const copyBtn = document.querySelector('[data-copy]');
+            const result = calculator.currentOperand;
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(result).then(() => {
+                // Show feedback
+                copyBtn.textContent = '✓ Copied!';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy Result';
+                    copyBtn.classList.remove('copied');
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                copyBtn.textContent = '✗ Failed';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy Result';
+                }, 1500);
+            });
+        });
+
+        // Clear history button event listener
+        document.querySelector('[data-clear-history]').addEventListener('click', () => {
+            calculator.clearHistory();
+        });
+
+        // History item click event listener (using event delegation)
+        document.querySelector('[data-history-list]').addEventListener('click', (e) => {
+            const historyItem = e.target.closest('.history-item');
+            if (historyItem) {
+                const result = historyItem.dataset.result;
+                calculator.currentOperand = result;
+                calculator.updateDisplay();
+            }
+        });
+
+        // Add keyboard shortcut for copy (Ctrl+C or Cmd+C)
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                // Only trigger if calculator has focus (not when copying other text)
+                if (document.activeElement.tagName === 'BODY') {
+                    e.preventDefault();
+                    document.querySelector('[data-copy]').click();
+                }
             }
         });
     </script>
