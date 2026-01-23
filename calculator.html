@@ -259,7 +259,8 @@
             }
 
             chooseOperation(operation) {
-                if (this.currentOperand === '') return;
+                // Skip if error state or no input
+                if (this.currentOperand === '' || this.currentOperand === 'Error') return;
                 
                 // Handle percentage as a special case
                 if (operation === '%') {
@@ -328,7 +329,7 @@
                 if (stringNumber === '') return '0';
                 
                 // Split into integer and decimal parts
-                const integerDigits = parseInt(stringNumber.split('.')[0]);
+                const integerDigits = parseFloat(stringNumber.split('.')[0]);
                 const decimalDigits = stringNumber.split('.')[1];
                 let integerDisplay;
                 
