@@ -71,10 +71,13 @@ Simply open `calculator.html` in any modern web browser. No installation or depe
 ### Screenshots
 
 **Desktop View** - Modern dark theme with purple gradient background
-![Calculator Desktop View](https://github.com/user-attachments/assets/47d90ae1-973c-4156-8db8-8907b5c013f6)
+
+<img src="https://github.com/user-attachments/assets/47d90ae1-973c-4156-8db8-8907b5c013f6" alt="Calculator Desktop View" width="400">
 
 **Mobile View** - Fully responsive, adapts to smaller screens (375×667)
-![Calculator Mobile View](https://github.com/user-attachments/assets/26c464bf-379f-47af-bb71-ed99ebe63400)
+
+<img src="https://github.com/user-attachments/assets/26c464bf-379f-47af-bb71-ed99ebe63400" alt="Calculator Mobile View" width="250">
 
 **Error Handling** - Shows "Error" for invalid operations (division by zero)
-![Calculator Error State](https://github.com/user-attachments/assets/e9bfea5b-daa4-4442-abeb-4b1cac6fb1d7)
+
+<img src="https://github.com/user-attachments/assets/e9bfea5b-daa4-4442-abeb-4b1cac6fb1d7" alt="Calculator Error State" width="400">
