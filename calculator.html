@@ -212,6 +212,7 @@
             constructor(previousOperandElement, currentOperandElement) {
                 this.previousOperandElement = previousOperandElement;
                 this.currentOperandElement = currentOperandElement;
+                this.PRECISION_MULTIPLIER = 100000000;
                 this.clear();
             }
 
@@ -223,6 +224,12 @@
             }
 
             delete() {
+                // Handle error state - clear it
+                if (this.currentOperand === 'Error') {
+                    this.currentOperand = '0';
+                    this.shouldResetScreen = false;
+                    return;
+                }
                 if (this.shouldResetScreen) return;
                 if (this.currentOperand === '0') return;
                 if (this.currentOperand.length === 1) {
@@ -303,7 +310,7 @@
                 }
 
                 // Round to avoid floating point errors
-                computation = Math.round(computation * 100000000) / 100000000;
+                computation = Math.round(computation * this.PRECISION_MULTIPLIER) / this.PRECISION_MULTIPLIER;
                 
                 this.currentOperand = computation.toString();
                 this.operation = undefined;
@@ -321,7 +328,7 @@
                 if (stringNumber === '') return '0';
                 
                 // Split into integer and decimal parts
-                const integerDigits = parseFloat(stringNumber.split('.')[0]);
+                const integerDigits = parseInt(stringNumber.split('.')[0]);
                 const decimalDigits = stringNumber.split('.')[1];
                 let integerDisplay;
                 
