@@ -71,8 +71,13 @@ Simply open `calculator.html` in any modern web browser. No installation or depe
 - ✅ Responsive design: Works on all screen sizes
 
 ### Screenshots
-- **Desktop View**: Modern dark theme with purple gradient background
-- **Mobile View**: Fully responsive, adapts to smaller screens
-- **Error Handling**: Shows "Error" for invalid operations
-- **Calculations**: Real-time display of operations and results
+
+**Desktop View** - Modern dark theme with purple gradient background
+![Calculator Desktop View](https://github.com/user-attachments/assets/47d90ae1-973c-4156-8db8-8907b5c013f6)
+
+**Mobile View** - Fully responsive, adapts to smaller screens (375×667)
+![Calculator Mobile View](https://github.com/user-attachments/assets/26c464bf-379f-47af-bb71-ed99ebe63400)
+
+**Error Handling** - Shows "Error" for invalid operations (division by zero)
+![Calculator Error State](https://github.com/user-attachments/assets/e9bfea5b-daa4-4442-abeb-4b1cac6fb1d7)
 ```
