@@ -42,6 +42,29 @@ Notes
 - The example uses an in-memory token store (for demo only). Tokens expire after 1 hour by default.
 - If you run into native build failures for `better-sqlite3` on Windows, install the "Desktop development with C++" workload for Visual Studio or use the Windows Build Tools as described in its installation docs.
 
+Docker (recommended for Windows users)
+------------------------------------
+
+You can run the app with Docker to avoid native build issues on Windows. Example using Docker Compose:
+
+```bash
+docker-compose build --pull
+docker-compose up --detach
+# open http://localhost:3000/
+```
+
+The `docker-compose.yml` mounts `data.db` from the repository root so your seeded database persists locally. To run with a custom admin password:
+
+```bash
+ADMIN_PASSWORD=yourpass docker-compose up --build
+```
+
+To stop and remove containers:
+
+```bash
+docker-compose down
+```
+
 Contributing
 - Create a branch for your change (e.g. `git checkout -b fix/readme`).
 - Run tests / `npm run init-db` if your change affects the DB.

@@ -1,9 +1,13 @@
-version: "3.8"
+version: '3.8'
+
 services:
   app:
     build: .
     ports:
       - "3000:3000"
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-adminpass}
     volumes:
       - ./data.db:/usr/src/app/data.db
+      - ./public:/usr/src/app/public:ro
     restart: unless-stopped
