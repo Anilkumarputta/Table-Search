@@ -12,6 +12,7 @@
  * Start:
  *  ADMIN_PASSWORD="yourpass" npm start
  */
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
