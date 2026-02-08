@@ -2,404 +2,219 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Table Data Searching — Fullstack (stories, fuzzy, edit, avatars)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>FTS Table Explorer — Demo UI</title>
   <style>
-    .match { background: #ffeb3b; padding: 0 2px; border-radius: 2px; }
-    th.sortable { cursor: pointer; user-select: none; }
-    th.sortable:after { content: " \u2195"; color: #fff; font-weight: 400; margin-left: 6px; }
-    th.sortable.asc:after { content: " \u2191"; }
-    th.sortable.desc:after { content: " \u2193"; }
-    .name-link { color: inherit; text-decoration: underline; cursor: pointer; }
-    .avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-    .avatar-lg { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
-    .preview-row td { background: #f8f9fa; }
-    .controls { display:flex; gap:8px; align-items:center; justify-content:center; }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;max-width:980px;margin:20px auto;padding:0 16px;color:#222}
+    header{display:flex;align-items:center;justify-content:space-between}
+    input[type=text]{width:60%;padding:8px;border:1px solid #ddd;border-radius:6px}
+    button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#f6f6f6;cursor:pointer}
+    .list{margin-top:16px;display:grid;grid-template-columns:1fr;gap:10px}
+    .item{border:1px solid #eee;padding:10px;border-radius:8px;display:flex;gap:12px;align-items:flex-start}
+    .photo{width:64px;height:64px;border-radius:8px;object-fit:cover}
+    .meta{flex:1}
+    .story{white-space:pre-wrap;color:#333;margin-top:8px}
+    .controls{display:flex;gap:8px}
+    .editor{margin-top:12px}
+    .login{margin-left:12px}
+    .notice{color:#666;font-size:13px;margin-top:8px}
+    footer{margin-top:24px;color:#666;font-size:13px}
+    textarea{font-family:inherit}
   </style>
 </head>
 <body>
-  <main class="container mt-4 pb-5 pt-4" style="background: #d9ebfa; border-radius: 12px;">
-    <div class="row">
-      <div class="offset-md-1 col-md-10 d-flex gap-2 align-items-center">
-        <input id="search" class="form-control" type="search" placeholder="Search — try name, country, city, id, or story" aria-label="Live search table">
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="fuzzyToggle">
-          <label class="form-check-label" for="fuzzyToggle">Fuzzy (client)</label>
-        </div>
-        <button id="loginBtn" class="btn btn-outline-primary btn-sm">Admin Login</button>
-        <div id="loggedInBadge" style="display:none;" class="badge bg-success">Admin</div>
-      </div>
+  <header>
+    <h1>FTS Table Explorer — Demo UI</h1>
+    <div>
+      <input id="q" type="text" placeholder="Search (server FTS)" />
+      <button id="searchBtn">Search</button>
+      <button id="fuzzyBtn">Fuzzy (client)</button>
+      <button id="refreshBtn">Refresh</button>
+      <button id="loginBtn" class="login">Login</button>
     </div>
+  </header>
 
-    <div class="row mt-2">
-      <div class="col-12 text-center">
-        <small id="summary" class="text-muted"></small>
-        <div id="spinner" class="spinner-border text-primary" role="status" style="display:none; width:1rem; height:1rem;">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    </div>
+  <div class="notice">Tip: Use "Fuzzy" to search locally across all records. Use "Search" to query the server FTS index.</div>
 
-    <div class="row mt-3">
-      <div class="offset-md-1 col-md-10">
-        <div class="table-responsive">
-          <table id="mytable" class="table table-bordered border-primary table-hover text-capitalize"></table>
-        </div>
+  <div id="results" class="list"></div>
 
-        <nav aria-label="Pagination" class="mt-3">
-          <ul class="pagination justify-content-center" id="pagination"></ul>
-        </nav>
-      </div>
-    </div>
-  </main>
+  <div id="detail"></div>
 
-  <!-- Story modal (view + edit) -->
-  <div class="modal fade" id="storyModal" tabindex="-1" aria-labelledby="storyModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="storyModalLabel">Story</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" id="storyModalBody">
-          <!-- dynamic -->
-        </div>
-        <div class="modal-footer">
-          <div class="me-auto" id="storyModalMeta"></div>
-          <div class="controls">
-            <button id="editBtn" type="button" class="btn btn-sm btn-outline-secondary" style="display:none;">Edit</button>
-            <button id="saveBtn" type="button" class="btn btn-sm btn-primary" style="display:none;">Save</button>
-            <button id="cancelEditBtn" type="button" class="btn btn-sm btn-secondary" style="display:none;">Cancel</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+  <footer>Backend API endpoints used: <code>/api/users</code>, <code>/api/users/all</code>, <code>/api/users/:id</code>, <code>/api/login</code>, <code>/api/users/:id (PUT)</code></footer>
+
+<script>
+(async function(){
+  const $ = id=>document.getElementById(id);
+  const q = $('q');
+  const results = $('results');
+  const detail = $('detail');
+  const searchBtn = $('searchBtn');
+  const fuzzyBtn = $('fuzzyBtn');
+  const refreshBtn = $('refreshBtn');
+  const loginBtn = $('loginBtn');
+
+  let allCache = null; // cache for /api/users/all
+
+  function makeItemHtml(u){
+    return `
+      <div class="item" data-id="${u.id}">
+        <img class="photo" src="${u.photo || 'https://i.pravatar.cc/150?u=unknown'}" alt="photo" />
+        <div class="meta">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>${escapeHtml(u.name)}</strong> — ${escapeHtml(u.city||'')} ${u.country?'- '+escapeHtml(u.country):''}</div>
+            <div class="controls"><button class="view">View</button></div>
           </div>
+          <div class="story">${escapeHtml(truncate(u.story||'',200))}</div>
         </div>
       </div>
-    </div>
-  </div>
+    `;
+  }
 
-  <!-- Login prompt modal -->
-  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">Admin Login</h5></div>
-        <div class="modal-body">
-          <div class="mb-2">
-            <label for="passwordInput" class="form-label visually-hidden">Password</label>
-            <input id="passwordInput" class="form-control" type="password" placeholder="Enter admin password">
-          </div>
-          <div id="loginError" class="text-danger small" style="display:none;"></div>
-        </div>
-        <div class="modal-footer">
-          <button id="doLoginBtn" class="btn btn-primary btn-sm">Login</button>
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  function escapeHtml(s){
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function truncate(s,n){return s && s.length>n ? s.slice(0,n-1)+'…' : s}
 
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script>
-    const API = '/api/users';
-    const columns = ['avatar','id','name','country','city','actions'];
-    let state = { page: 1, limit: 8, sort: 'id', dir: 'asc', search: '' };
-    let adminToken = localStorage.getItem('admin_token') || null;
-    let isAdmin = !!adminToken;
-    let fuseIndex = null;
-    let allUsersCache = null;
-
-    function escapeHtml(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  async function serverSearch(qs){
+    results.innerHTML = 'Searching...';
+    try{
+      const url = '/api/users?search='+encodeURIComponent(qs)+'&limit=50';
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Search failed');
+      const json = await res.json();
+      renderList(json.results || []);
+    }catch(err){
+      results.innerHTML = '<div class="notice">Server search error: '+err.message+'</div>';
     }
-    function highlight(text, terms) {
-      if (!terms || terms.length === 0) return escapeHtml(text);
-      let safe = escapeHtml(text);
-      for (const t of terms) {
-        if (!t) continue;
-        try {
-          const re = new RegExp(t.replace(/[.*+?^${}()|[\\]\]/g,'\\$&'), 'gi');
-          safe = safe.replace(re, match => `<span class="match">${escapeHtml(match)}</span>`);
-        } catch (e) {}
-      }
-      return safe;
-    }
-    function showSpinner(on) { document.getElementById('spinner').style.display = on ? 'inline-block' : 'none'; }
+  }
 
-    function setAdminToken(token) {
-      adminToken = token;
-      localStorage.setItem('admin_token', token || '');
-      isAdmin = !!token;
-      document.getElementById('loggedInBadge').style.display = isAdmin ? 'inline-block' : 'none';
-    }
-    if (isAdmin) document.getElementById('loggedInBadge').style.display = 'inline-block';
-
-    async function fetchData() {
-      showSpinner(true);
-      const fuzzyEnabled = document.getElementById('fuzzyToggle').checked;
-      const q = state.search.trim();
-      try {
-        if (fuzzyEnabled && q.length > 0) {
-          if (!allUsersCache) {
-            const resAll = await fetch('/api/users/all');
-            if (!resAll.ok) throw new Error('Failed to load all users for fuzzy search');
-            allUsersCache = await resAll.json();
-            fuseIndex = new Fuse(allUsersCache, {
-              keys: ['name', 'story', 'city', 'country'],
-              threshold: 0.35,
-              ignoreLocation: true,
-              minMatchCharLength: 2
-            });
-          }
-          const fuseRes = fuseIndex.search(q, { limit: 200 });
-          const total = fuseRes.length;
-          const start = (state.page - 1) * state.limit;
-          const paged = fuseRes.slice(start, start + state.limit).map(r => r.item);
-          renderTable(paged, q);
-          renderPagination(total, state.page, state.limit);
-          document.getElementById('summary').textContent = \
-            `${total} result${total !== 1 ? 's' : ''} (fuzzy)`;
-        } else {
-          const params = new URLSearchParams({
-            search: state.search,
-            page: state.page,
-            limit: state.limit,
-            sort: state.sort,
-            dir: state.dir
-          });
-          const res = await fetch(`${API}?${params.toString()}`);
-          if (!res.ok) throw new Error('Network error');
-          const json = await res.json();
-          renderTable(json.results, state.search);
-          renderPagination(json.total, json.page, json.limit);
-          document.getElementById('summary').textContent = `${json.total} result${json.total !== 1 ? 's' : ''}`;
+  function clientFuzzy(qs){
+    results.innerHTML = 'Loading all records for fuzzy search...';
+    (async()=>{
+      try{
+        if(!allCache) {
+          const res = await fetch('/api/users/all');
+          if(!res.ok) throw new Error('Could not load all users');
+          allCache = await res.json();
         }
-      } catch (err) {
-        console.error(err);
-        document.getElementById('mytable').innerHTML = `<tr><td colspan="${columns.length}">Error loading data</td></tr>`;
-      } finally {
-        showSpinner(false);
+        const out = fuzzyFilter(allCache, qs);
+        renderList(out.slice(0,100));
+      }catch(err){
+        results.innerHTML = '<div class="notice">Fuzzy search error: '+err.message+'</div>';
       }
-    }
+    })();
+  }
 
-    function renderTable(rows, searchTerm) {
-      const terms = searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
-      let html = `<thead><tr class="bg-primary text-white fw-bold">`;
-      html += `<th></th>`; // avatar
-      html += `<th>ID</th>`;
-      html += `<th>NAME</th>`;
-      html += `<th>COUNTRY</th>`;
-      html += `<th>CITY</th>`;
-      html += `<th></th>`;
-      html += `</tr></thead><tbody>`;
+  function fuzzyFilter(rows, qs){
+    const q = String(qs||'').toLowerCase().trim();
+    if(!q) return rows;
+    return rows.map(r=>({r,score:scoreRow(r,q)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>0).map(x=>x.r);
+  }
+  function scoreRow(r,q){
+    let s=0;
+    const hay = (r.name+' '+r.city+' '+r.country+' '+(r.story||'')).toLowerCase();
+    if(hay.includes(q)) s+=100;
+    const tokens = q.split(/\s+/).filter(Boolean);
+    for(const t of tokens){ if(hay.includes(t)) s+=10; }
+    const idx = hay.indexOf(q); if(idx>=0) s += Math.max(0,30 - idx);
+    return s;
+  }
 
-      if (!rows || rows.length === 0) {
-        html += `<tr><td colspan="${columns.length}" class="text-center">No results</td></tr>`;
-      } else {
-        for (const r of rows) {
-          const idEsc = escapeHtml(r.id);
-          const photo = r.photo || `https://i.pravatar.cc/150?u=${idEsc}`;
-          html += `<tr data-id="${idEsc}">
-            <td style="width:56px"><img src="${escapeHtml(photo)}" class="avatar" alt="${escapeHtml(r.name)}"></td>
-            <td>${highlight(r.id, terms)}</td>
-            <td><span class="name-link" data-id="${idEsc}" role="button" tabindex="0">${highlight(r.name, terms)}</span></td>
-            <td>${highlight(r.country, terms)}</td>
-            <td>${highlight(r.city, terms)}</td>
-            <td style="width:120px">
-              <button class="btn btn-sm btn-outline-secondary expandBtn">View</button>
-              <button class="btn btn-sm btn-outline-info ms-1 storyBtn">Story</button>
-            </td>
-          </tr>
-          <tr class="preview-row" data-preview-for="${idEsc}" style="display:none;">
-            <td colspan="${columns.length}">
-              <div class="d-flex gap-3 align-items-start">
-                <img src="${escapeHtml(photo)}" class="avatar-lg" alt="${escapeHtml(r.name)}">
-                <div class="preview-text"><em>Loading preview…</em></div>
-              </div>
-            </td>
-          </tr>`;
-        }
-      }
-      html += `</tbody>`;
-      document.getElementById('mytable').innerHTML = html;
-
-      // Attach handlers: sort headers
-      document.querySelectorAll('#mytable th').forEach((th, idx) => {
-        if (idx === 0 || idx === 5) return; // don't sort by avatar or actions
-        th.classList.add('sortable');
-        th.setAttribute('data-col', ['id','name','country','city'][idx-1]);
-        th.addEventListener('click', () => {
-          const col = th.getAttribute('data-col');
-          if (state.sort === col) state.dir = state.dir === 'asc' ? 'desc' : 'asc';
-          else { state.sort = col; state.dir = 'asc'; }
-          fetchData();
-        });
-        th.setAttribute('tabindex','0');
-        th.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); th.click(); } });
-      });
-
-      // Expand/collapse preview row
-      document.querySelectorAll('.expandBtn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const tr = btn.closest('tr');
-          const id = tr.getAttribute('data-id');
-          const previewRow = document.querySelector(`tr[data-preview-for="${id}"]`);
-          const shown = previewRow.style.display !== 'none';
-          if (shown) { previewRow.style.display = 'none'; btn.textContent = 'View'; }
-          else {
-            const previewText = previewRow.querySelector('.preview-text');
-            if (previewText && previewText.textContent.includes('Loading')) {
-              try {
-                const res = await fetch(`${API}/${encodeURIComponent(id)}`);
-                if (!res.ok) throw new Error('Not found');
-                const user = await res.json();
-                const snippet = (user.story || '').slice(0, 350);
-                previewText.innerHTML = `<strong>${escapeHtml(user.name)}</strong><p>${escapeHtml(snippet)}${(user.story||'').length > 350 ? '…' : ''}</p>`;
-              } catch (err) { previewText.innerHTML = `<em>Unable to load preview.</em>`; }
-            }
-            previewRow.style.display = '';
-            btn.textContent = 'Hide';
-          }
-        });
-      });
-
-      // Story modal open
-      document.querySelectorAll('.storyBtn, .name-link').forEach(el => {
-        el.addEventListener('click', (e) => {
-          const id = el.getAttribute('data-id');
-          openStoryModalFor(id);
-        });
-        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
-      });
-    }
-
-    function renderPagination(total, page, limit) {
-      const pages = Math.max(1, Math.ceil(total / limit));
-      const ul = document.getElementById('pagination');
-      ul.innerHTML = '';
-      const makeLi = (content, disabled, onClick, active) => {
-        const li = document.createElement('li');
-        li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
-        const btn = document.createElement('button');
-        btn.className = 'page-link';
-        btn.type = 'button';
-        btn.innerHTML = content;
-        if (!disabled && onClick) btn.addEventListener('click', onClick);
-        li.appendChild(btn);
-        return li;
-      };
-      ul.appendChild(makeLi('Previous', page === 1, () => { state.page = Math.max(1, state.page - 1); fetchData(); }));
-      const start = Math.max(1, page - 2);
-      const end = Math.min(pages, page + 2);
-      for (let p = start; p <= end; p++) ul.appendChild(makeLi(String(p), false, () => { state.page = p; fetchData(); }, p === page));
-      ul.appendChild(makeLi('Next', page === pages, () => { state.page = Math.min(pages, state.page + 1); fetchData(); }));
-    }
-
-    async function openStoryModalFor(id) {
-      if (!id) return;
-      const modalEl = document.getElementById('storyModal');
-      const bsModal = new bootstrap.Modal(modalEl);
-      const body = document.getElementById('storyModalBody');
-      const title = document.getElementById('storyModalLabel');
-      const meta = document.getElementById('storyModalMeta');
-      const editBtn = document.getElementById('editBtn');
-      const saveBtn = document.getElementById('saveBtn');
-      const cancelBtn = document.getElementById('cancelEditBtn');
-
-      title.textContent = 'Loading...';
-      body.innerHTML = '';
-      meta.textContent = '';
-      editBtn.style.display = isAdmin ? '' : 'none';
-      saveBtn.style.display = 'none';
-      cancelBtn.style.display = 'none';
-
-      bsModal.show();
-
-      try {
-        const res = await fetch(`${API}/${encodeURIComponent(id)}`);
-        if (!res.ok) { title.textContent = 'Not found'; body.textContent = 'No story found for this user.'; return; }
-        const user = await res.json();
-        title.textContent = \
-          `${user.name} — Story`;
-        const storyText = String(user.story || 'No story provided.');
-        body.innerHTML = `<div id="storyText">${escapeHtml(storyText).replace(/\n/g, '<br>')}</div>`;
-        meta.innerHTML = `<img src="${escapeHtml(user.photo || '')}" class="avatar-lg me-2" style="vertical-align:middle;"> ${escapeHtml(user.city || '')} ${user.country ? ' • ' + escapeHtml(user.country) : ''}`;
-
-        let editing = false;
-        editBtn.onclick = () => {
-          if (!isAdmin) return alert('Admin only');
-          editing = true;
-          const current = storyText;
-          body.innerHTML = `<textarea id="storyEditor" class="form-control" rows="8">${escapeHtml(current)}</textarea>`;
-          editBtn.style.display = 'none';
-          saveBtn.style.display = '';
-          cancelBtn.style.display = '';
-        };
-
-        cancelBtn.onclick = () => {
-          editing = false;
-          body.innerHTML = `<div id="storyText">${escapeHtml(storyText).replace(/\n/g, '<br>')}</div>`;
-          editBtn.style.display = isAdmin ? '' : 'none';
-          saveBtn.style.display = 'none';
-          cancelBtn.style.display = 'none';
-        };
-
-        saveBtn.onclick = async () => {
-          const newText = document.getElementById('storyEditor').value;
-          saveBtn.disabled = true;
-          try {
-            const resu = await fetch(`${API}/${encodeURIComponent(id)}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': adminToken ? `Bearer ${adminToken}` : ''
-              },
-              body: JSON.stringify({ story: newText })
-            });
-            if (!resu.ok) {
-              if (resu.status === 401) { alert('Unauthorized. Please log in as admin.'); }
-              else { const err = await resu.json().catch(()=>({error:'unknown'})); alert('Error saving: ' + (err.error || resu.statusText)); }
-            } else {
-              editing = false;
-              body.innerHTML = `<div id="storyText">${escapeHtml(newText).replace(/\n/g, '<br>')}</div>`;
-              editBtn.style.display = isAdmin ? '' : 'none';
-              saveBtn.style.display = 'none';
-              cancelBtn.style.display = 'none';
-              if (allUsersCache) {
-                const idx = allUsersCache.findIndex(u => u.id === id);
-                if (idx !== -1) { allUsersCache[idx].story = newText; if (fuseIndex) fuseIndex.setCollection(allUsersCache); }
-              }
-            }
-          } catch (err) { console.error(err); alert('Error saving story'); } finally { saveBtn.disabled = false; }
-        };
-      } catch (err) { console.error(err); title.textContent = 'Error'; body.textContent = 'Unable to load story.'; }
-    }
-
-    const loginBtn = document.getElementById('loginBtn');
-    const loginModalEl = document.getElementById('loginModal');
-    const loginModal = new bootstrap.Modal(loginModalEl);
-    loginBtn.addEventListener('click', () => { document.getElementById('passwordInput').value = ''; document.getElementById('loginError').style.display='none'; loginModal.show(); });
-
-    document.getElementById('doLoginBtn').addEventListener('click', async () => {
-      const pwd = document.getElementById('passwordInput').value;
-      document.getElementById('loginError').style.display='none';
-      try {
-        const res = await fetch('/api/login', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: pwd }) });
-        if (!res.ok) { const err = await res.json().catch(()=>({error:'login failed'})); document.getElementById('loginError').textContent = err.error || 'Login failed'; document.getElementById('loginError').style.display = ''; return; }
-        const json = await res.json();
-        setAdminToken(json.token);
-        loginModal.hide();
-      } catch (err) { console.error(err); document.getElementById('loginError').textContent = 'Login failed'; document.getElementById('loginError').style.display = ''; }
+  function renderList(list){
+    if(!list || list.length===0){ results.innerHTML = '<div class="notice">No results</div>'; return }
+    results.innerHTML = list.map(u=>makeItemHtml(u)).join('\n');
+    Array.from(results.querySelectorAll('.item')).forEach(el=>{
+      el.querySelector('.view').addEventListener('click',()=>openDetail(el.dataset.id));
+      el.addEventListener('click', e=>{ if(e.target.classList.contains('view')) return; openDetail(el.dataset.id); });
     });
+  }
 
-    function debounce(fn, wait) { let t; return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); }; }
+  async function openDetail(id){
+    detail.innerHTML = 'Loading...';
+    try{
+      const res = await fetch('/api/users/'+encodeURIComponent(id));
+      if(!res.ok) throw new Error('Could not load');
+      const u = await res.json();
+      detail.innerHTML = `
+        <div class="item">
+          <img class="photo" src="${u.photo||''}" />
+          <div class="meta">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><strong>${escapeHtml(u.name)}</strong> — ${escapeHtml(u.city||'')} ${u.country?'- '+escapeHtml(u.country):''}</div>
+              <div class="controls">
+                <button id="editBtn">Edit Story</button>
+              </div>
+            </div>
+            <div class="story" id="storyText">${escapeHtml(u.story||'')}</div>
+            <div class="editor" id="editorArea" style="display:none">
+              <textarea id="storyInput" rows="6" style="width:100%">${escapeHtml(u.story||'')}</textarea>
+              <div style="margin-top:8px"><button id="saveBtn">Save</button> <button id="cancelBtn">Cancel</button></div>
+            </div>
+            <div id="editMsg" style="margin-top:8px;color:#666;font-size:13px"></div>
+          </div>
+        </div>
+      `;
+      $('editBtn').addEventListener('click', ()=> startEdit(u.id));
+    }catch(err){ detail.innerHTML = '<div class="notice">Error: '+err.message+'</div>' }
+  }
 
-    document.getElementById('search').addEventListener('input', debounce(function(e) { state.search = e.target.value; state.page = 1; fetchData(); }, 250));
+  function hasToken(){ return !!localStorage.getItem('fts_demo_token'); }
+  function getToken(){ return localStorage.getItem('fts_demo_token'); }
 
-    document.getElementById('fuzzyToggle').addEventListener('change', () => { state.page = 1; fetchData(); });
+  function startEdit(id){
+    if(!hasToken()){
+      alert('You must login as admin to edit. Click Login and enter the admin password.');
+      return;
+    }
+    $('storyText').style.display='none';
+    $('editorArea').style.display='block';
+    $('cancelBtn').addEventListener('click',()=>{ $('editorArea').style.display='none'; $('storyText').style.display='block'; });
+    $('saveBtn').addEventListener('click', async ()=>{
+      const story = $('storyInput').value;
+      $('editMsg').textContent = 'Saving...';
+      try{
+        const res = await fetch('/api/users/'+encodeURIComponent(id),{
+          method:'PUT',
+          headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer '+getToken() },
+          body: JSON.stringify({ story })
+        });
+        const json = await res.json();
+        if(!res.ok) throw new Error(json && json.error ? json.error : 'Save failed');
+        $('editMsg').textContent = 'Saved.';
+        $('editorArea').style.display='none';
+        $('storyText').textContent = story;
+        $('storyText').style.display='block';
+      }catch(err){ $('editMsg').textContent = 'Error: '+err.message }
+    });
+  }
 
-    fetchData();
-  </script>
+  loginBtn.addEventListener('click', async ()=>{
+    if(hasToken()){
+      if(confirm('Logout?')){ localStorage.removeItem('fts_demo_token'); loginBtn.textContent='Login'; alert('Logged out'); }
+      return;
+    }
+    const pw = prompt('Admin password: (default: adminpass)');
+    if(!pw) return;
+    try{
+      const res = await fetch('/api/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: pw }) });
+      const json = await res.json();
+      if(!res.ok) throw new Error(json && json.error? json.error : 'Login failed');
+      localStorage.setItem('fts_demo_token', json.token);
+      loginBtn.textContent = 'Logout';
+      alert('Logged in — token stored (expires in 1 hour)');
+    }catch(err){ alert('Login error: '+err.message) }
+  });
+
+  searchBtn.addEventListener('click', ()=> serverSearch(q.value));
+  fuzzyBtn.addEventListener('click', ()=> clientFuzzy(q.value));
+  refreshBtn.addEventListener('click', ()=>{ allCache=null; results.innerHTML=''; detail.innerHTML=''; });
+
+  if(hasToken()) loginBtn.textContent='Logout';
+
+  await serverSearch('');
+})();
+</script>
+</body>
+</html>
 </body>
 </html>
