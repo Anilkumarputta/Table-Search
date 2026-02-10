@@ -1,36 +1,224 @@
-# Table Search — Fullstack (FTS, fuzzy, edit, avatars)
+# Table Search
 
-This repo contains a fullstack example: an Express + SQLite backend and a static frontend in public/.
+Professional search cockpit with server full-text search (FTS), fuzzy matching, analytics, and profile tools.
 
-Features:
-- Server-side full-text search (SQLite FTS5) across name + story
-- Client-side fuzzy search via Fuse.js (toggle)
-- Paginated list, server-side sorting
-- Story previews (expand/collapse) and modal view
-- Admin login -> token -> edit/save story (PUT /api/users/:id)
-- Avatars (seeded via pravatar) and responsive UI
-- Dockerfile + docker-compose for local container runs
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-Quick start (local)
-1. Install:
+Table of contents
+- [About](#about)
+- [Screenshots](#screenshots)
+- [Features](#features)
+- [API Endpoints](#api-endpoints)
+- [Prerequisites](#prerequisites)
+- [Run locally](#run-locally)
+  - [Single-repo / monolith](#single-repo--monolith)
+  - [Frontend / Backend split (common)](#frontend--backend-split-common)
+- [Configuration (.env example)](#configuration-env-example)
+- [Usage / UI guide](#usage--ui-guide)
+- [Development tips](#development-tips)
+- [Contributing](#contributing)
+- [License](#license)
+- [Credits](#credits)
+
+## About
+
+Table Search is a data discovery workspace UI for searching, exploring, and previewing profile records from tabular data sources. It supports server-side full-text search (FTS), fuzzy matching, filtering, saved views, keyboard shortcuts, and dark/light themes for comfortable analysis.
+
+## Screenshots
+
+> Place the three screenshot files in `assets/screenshots/` as described above. The markdown below references those files.
+
+Light theme — main listing
+![Light theme - full view](assets/screenshots/screenshot-1.png)
+
+Light theme — single result & profile details
+![Light theme - result detail](assets/screenshots/screenshot-2.png)
+
+Dark theme
+![Dark theme](assets/screenshots/screenshot-3.png)
+
+## Features
+
+- Server full-text search (FTS) mode and fuzzy search mode
+- Filterable results (country, story presence, recently viewed)
+- Saved views, sorting and pagination controls
+- Profile preview panel with Overview / Story / Activity tabs
+- Keyboard shortcuts:
+  - `/` or focus shortcut to jump to search field
+  - `Enter` to submit search
+  - `Esc` to clear
+  - `Shift+F` to enter fuzzy-search mode
+- Dark and light themes
+- Simple REST API for records and authentication
+
+## API Endpoints (examples)
+
+The project exposes simple REST endpoints used by the UI. Replace `http://localhost:3000` with the host you run locally.
+
+- List (paged) search results
+  - GET /api/users
+  - Example:
+    ```
+    curl -X GET "http://localhost:3000/api/users"
+    ```
+
+- Get all users (non-paged)
+  - GET /api/users/all
+  - Example:
+    ```
+    curl -X GET "http://localhost:3000/api/users/all"
+    ```
+
+- Get user by id
+  - GET /api/users/:id
+  - Example:
+    ```
+    curl -X GET "http://localhost:3000/api/users/1"
+    ```
+
+- Login (returns auth token)
+  - POST /api/login
+  - Example:
+    ```
+    curl -X POST "http://localhost:3000/api/login" \
+      -H "Content-Type: application/json" \
+      -d '{"username":"admin","password":"password"}'
+    ```
+
+- Update user by id
+  - PUT /api/users/:id
+  - Example:
+    ```
+    curl -X PUT "http://localhost:3000/api/users/1" \
+      -H "Content-Type: application/json" \
+      -d '{"name":"Anil","city":"Texas"}'
+    ```
+
+> Note: These are example endpoints recorded from the UI. The exact auth flow, headers (e.g. Authorization), and payloads depend on the repository implementation.
+
+## Prerequisites
+
+- Git
+- Node.js (recommended LTS, e.g., 18.x or 20.x) — adjust to project requirements if different
+- npm or yarn
+- If the project uses a database, ensure the DB server is running and reachable (see `.env` vars below)
+- Optional: Docker (if there is a docker-compose / container setup)
+
+## Run locally
+
+Below are two common setups — single-repo monolithic projects and separated frontend/backend. Use the one that fits this repository.
+
+### Single-repo / monolith
+
+1. Clone repository
+   ```
+   git clone https://github.com/Anilkumarputta/Table-Search.git
+   cd Table-Search
+   ```
+
+2. Create environment file
+   ```
+   cp .env.example .env
+   # Edit .env to set DB, FTS endpoint, JWT secret, and port as needed
+   ```
+
+3. Install dependencies
+   ```
    npm install
+   ```
 
-2. Initialize DB:
-   npm run init-db
+4. Run development server
+   ```
+   npm run dev
+   ```
+   Or, to build and start:
+   ```
+   npm run build
+   npm start
+   ```
 
-3. Start server (set admin password optionally):
-   ADMIN_PASSWORD="yourpass" npm start
+5. Open browser
+   - Visit: http://localhost:3000 (or the PORT set in `.env`)
 
-4. Open:
-   http://localhost:3000
+### Frontend / Backend split (common)
 
-API
-- GET /api/users?search=&page=1&limit=10&sort=name&dir=asc
-- GET /api/users/:id
-- GET /api/users/all
-- POST /api/login  { password }
-- PUT /api/users/:id  (Authorization: Bearer <token>)  { story }
+If the repo has `client/` and `server/` directories:
 
-Notes
-- For production, replace in-memory tokens with real auth, use Postgres/Elasticsearch for large datasets, and store photos in S3 or similar.
-- Ensure SQLite is built with FTS5 support for server-side search.
+1. Start the backend
+   ```
+   cd server
+   cp .env.example .env
+   npm install
+   npm run dev   # or npm start
+   ```
+
+2. Start the frontend
+   ```
+   cd ../client
+   cp .env.example .env
+   npm install
+   npm run dev   # typically starts on http://localhost:3000 or 5173
+   ```
+
+3. Open the frontend URL shown in terminal.
+
+## Configuration (.env example)
+
+Create a `.env` at project root (or per service) with variables like:
+
+```
+# .env.example
+PORT=3000
+NODE_ENV=development
+
+# Authentication
+JWT_SECRET=replace-with-a-secret
+
+# Database
+DATABASE_URL=postgres://user:pass@localhost:5432/dbname
+
+# Search / FTS server (if separate)
+FTS_SERVER_URL=http://localhost:9200
+
+# Optional
+LOG_LEVEL=info
+```
+
+Adjust variable names to match the repository's configuration.
+
+## Usage / UI guide
+
+- Search box: type a name, city, country, or story fragment and press Enter.
+- Server Search: runs the server-side FTS query (accurate, exact)
+- Fuzzy Search: allows approximate matches (useful for typos)
+- Filters: click country tags (USA, India), Has Story, Recently Viewed
+- Saved views: create and recall custom filter+sort presets
+- Sorting and Page size controls: use to refine result order and paging
+- Profile preview: click a result to view full profile; use tabs for Overview / Story / Activity
+- Keyboard shortcuts: use `/` to focus search, `Enter` to search, `Esc` to clear
+
+## Development tips
+
+- Use your browser DevTools to inspect API requests to /api/* endpoints to understand expected payloads.
+- If the workspace supports hot reload, edits to UI code should auto-update.
+- If a separate search server (e.g. ElasticSearch) is required, ensure it is seeded with expected index mappings and sample data.
+
+## Contributing
+
+Contributions are welcome. A minimal workflow:
+
+1. Fork the repo
+2. Create a topic branch: `git checkout -b feat/add-readme`
+3. Commit changes and push: `git push origin feat/add-readme`
+4. Open a Pull Request against `main` (or repo default branch)
+
+Add tests for bug fixes and new features where appropriate.
+
+## License
+
+This project is licensed under the MIT License — see [LICENSE](./LICENSE) for details.
+
+## Credits
+
+- UI screenshots: provided by the project owner
+- Created by: Anilkumarputta
