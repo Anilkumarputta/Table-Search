@@ -1,5 +1,5 @@
 <img width="160" height="40" alt="image" src="https://github.com/user-attachments/assets/29aa872b-8d36-4569-af9f-57c48c2e8d5e" />
-  ###   Table Search
+  ##Table Search
 
 Professional search cockpit with server full-text search (FTS), fuzzy matching, analytics, and profile tools.
 
