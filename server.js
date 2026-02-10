@@ -80,7 +80,7 @@ app.get('/api/users', (req, res) => {
         SELECT COUNT(*) AS cnt
         FROM users_fts f
         JOIN users u ON u.rowid = f.rowid
-        WHERE f MATCH ?
+        WHERE users_fts MATCH ?
       `);
       const totalRow = countStmt.get(ftsQuery);
       total = totalRow ? totalRow.cnt : 0;
@@ -89,7 +89,7 @@ app.get('/api/users', (req, res) => {
         SELECT u.id, u.name, u.country, u.city, u.photo
         FROM users_fts f
         JOIN users u ON u.rowid = f.rowid
-        WHERE f MATCH ?
+        WHERE users_fts MATCH ?
         ORDER BY ${sortCol} ${dir}
         LIMIT ? OFFSET ?
       `);
@@ -123,6 +123,18 @@ app.get('/api/users', (req, res) => {
   }
 });
 
+// GET /api/users/all
+app.get('/api/users/all', (req, res) => {
+  try {
+    const stmt = db.prepare('SELECT id, name, country, city, story, photo FROM users ORDER BY id ASC');
+    const rows = stmt.all();
+    res.json(rows);
+  } catch (err) {
+    console.error('Error /api/users/all', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/users/:id
 app.get('/api/users/:id', (req, res) => {
   try {
@@ -134,18 +146,6 @@ app.get('/api/users/:id', (req, res) => {
     res.json(row);
   } catch (err) {
     console.error('Error /api/users/:id', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// GET /api/users/all
-app.get('/api/users/all', (req, res) => {
-  try {
-    const stmt = db.prepare('SELECT id, name, country, city, story, photo FROM users ORDER BY id ASC');
-    const rows = stmt.all();
-    res.json(rows);
-  } catch (err) {
-    console.error('Error /api/users/all', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -208,4 +208,5 @@ setInterval(() => {
 }, 1000 * 60 * 5);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => console.log(`Server listening on http://${HOST}:${PORT}`));

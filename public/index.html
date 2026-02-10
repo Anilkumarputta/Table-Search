@@ -3,56 +3,180 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FTS Table Explorer — Demo UI</title>
+  <title>Table Search Workspace</title>
   <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-  <header>
-    <h1>FTS Table Explorer — Demo UI</h1>
-    <div>
-      <input id="q" type="text" placeholder="Search (server FTS)" />
-      <button id="searchBtn">Search</button>
-      <button id="fuzzyBtn">Fuzzy (client)</button>
-      <button id="refreshBtn">Refresh</button>
-      <button id="loginBtn" class="login">Login</button>
-    </div>
-  </header>
+  <a class="skip-link" href="#mainContent">Skip to content</a>
+  <div class="app-shell">
+    <header class="topbar card" role="banner">
+      <div class="brand-wrap">
+        <img src="/logo-table-search.svg" class="brand-logo" alt="Table Search logo" />
+        <div>
+        <p class="eyebrow">Data Operations • V4 Experience</p>
+        <h1>Table Search Workspace</h1>
+        <p class="subtitle">Professional search cockpit with server FTS, fuzzy matching, analytics, and collaboration-friendly profile tools.</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="themeBtn" class="btn btn-ghost" aria-label="Toggle color theme">🌙 Dark</button>
+        <button id="compactBtn" class="btn btn-ghost" aria-pressed="false">Compact mode</button>
+        <button id="loginBtn" class="btn btn-primary">Login</button>
+      </div>
+    </header>
+      <div class="top-actions">
+        <button id="themeBtn" class="btn btn-ghost" aria-label="Toggle color theme">🌙 Dark</button>
+        <button id="compactBtn" class="btn btn-ghost" aria-pressed="false">Compact mode</button>
+        <button id="loginBtn" class="btn btn-primary">Login</button>
+      </div>
+    </header>
 
-  <div class="notice">Tip: Use "Fuzzy" to search locally across all records. Use "Search" to query the server FTS index.</div>
+    <section class="summary-strip" aria-label="Dashboard summary">
+      <article class="metric card"><p>Total users</p><strong id="metricTotalUsers">--</strong></article>
+      <article class="metric card"><p>Matches</p><strong id="metricMatches">--</strong></article>
+      <article class="metric card"><p>Last query time</p><strong id="metricQueryMs">--</strong></article>
+      <article class="metric card"><p>Search mode</p><strong id="metricMode">Server FTS</strong></article>
+    </section>
 
-  <div id="results" class="list"></div>
+    <section class="control-panel card" aria-label="Search and filters">
+      <div class="search-row">
+        <label for="q" class="field-label">Search query</label>
+        <div class="search-input-wrap">
+          <span class="search-icon" aria-hidden="true">🔎</span>
+          <input id="q" type="text" placeholder="Search by name, city, country, or story" autocomplete="off" />
+          <datalist id="recentSearches"></datalist>
+        </div>
+      </div>
 
-  <div id="detail"></div>
+      <div class="actions-row sticky-controls">
+        <button id="searchBtn" class="btn btn-primary">Server Search</button>
+        <button id="fuzzyBtn" class="btn btn-secondary">Fuzzy Search</button>
+        <button id="clearBtn" class="btn btn-ghost">Clear</button>
+        <button id="saveViewBtn" class="btn btn-ghost">Save current view</button>
+      </div>
 
-  <footer>Backend API endpoints used: <code>/api/users</code>, <code>/api/users/all</code>, <code>/api/users/:id</code>, <code>/api/login</code>, <code>/api/users/:id (PUT)</code></footer>
+      <div class="toolbar-grid">
+        <div>
+          <p class="field-label">Filters</p>
+          <div id="filterChips" class="chips-row" role="group" aria-label="Quick filters">
+            <button data-filter="all" class="chip-btn active">All</button>
+            <button data-filter="usa" class="chip-btn">USA</button>
+            <button data-filter="india" class="chip-btn">India</button>
+            <button data-filter="hasStory" class="chip-btn">Has Story</button>
+            <button data-filter="recent" class="chip-btn">Recently Viewed</button>
+          </div>
+        </div>
+
+        <div class="inline-controls">
+          <label for="savedViews" class="field-label">Saved views</label>
+          <select id="savedViews" aria-label="Saved views">
+            <option value="">Select saved view</option>
+          </select>
+        </div>
+
+        <div class="inline-controls">
+          <label for="sortSelect" class="field-label">Sort</label>
+          <select id="sortSelect" aria-label="Sort by">
+            <option value="name:asc">Name A-Z</option>
+            <option value="name:desc">Name Z-A</option>
+            <option value="country:asc">Country</option>
+            <option value="city:asc">City</option>
+            <option value="id:asc">ID</option>
+          </select>
+        </div>
+
+        <div class="inline-controls">
+          <label for="pageSize" class="field-label">Page size</label>
+          <select id="pageSize" aria-label="Results per page">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+      <p class="notice">Shortcuts: <kbd>/</kbd> focus search, <kbd>Enter</kbd> search, <kbd>Esc</kbd> clear, <kbd>Shift+F</kbd> fuzzy mode.</p>
+    </section>
+
+    <main id="mainContent" class="dashboard-grid" role="main">
+      <section>
+        <div class="section-head">
+          <h2>Results</h2>
+          <span id="resultCount" class="chip"></span>
+        </div>
+        <div id="results" class="list card"></div>
+        <div class="pagination" aria-label="Pagination">
+          <button id="prevPage" class="btn btn-ghost btn-mini">Previous</button>
+          <span id="pageInfo" class="page-info">Page 1</span>
+          <button id="nextPage" class="btn btn-ghost btn-mini">Next</button>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head sticky-head">
+          <h2>Profile details</h2>
+          <div class="detail-actions">
+            <button id="pinCompareBtn" class="btn btn-ghost btn-mini" disabled>Pin to compare</button>
+            <button id="toggleReadBtn" class="btn btn-ghost btn-mini" disabled>Expanded view</button>
+          </div>
+        </div>
+        <div id="detail" class="detail card empty-state">Select a record to preview details.</div>
+      </section>
+    </main>
+
+    <section id="comparePanel" class="compare-panel card hidden" aria-label="Compare profiles"></section>
+
+    <footer>
+      API: <code>/api/users</code>, <code>/api/users/all</code>, <code>/api/users/:id</code>, <code>/api/login</code>, <code>/api/users/:id (PUT)</code>
+    </footer>
+  </div>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <dialog id="loginModal" class="login-modal" aria-label="Admin login">
+    <form id="loginForm" method="dialog">
+      <h3>Admin Login</h3>
+      <p>Enter your admin password to enable story editing.</p>
+      <label for="passwordInput" class="field-label">Password</label>
+      <input id="passwordInput" type="password" required />
+      <div class="modal-actions">
+        <button value="cancel" class="btn btn-ghost" type="button" id="cancelLoginBtn">Cancel</button>
+        <button value="submit" class="btn btn-primary" type="submit">Login</button>
+      </div>
+    </form>
+  </dialog>
+
+  
 
 <script>
 (async function(){
   const $ = id=>document.getElementById(id);
-  const q = $('q');
-  const results = $('results');
-  const detail = $('detail');
-  const searchBtn = $('searchBtn');
-  const fuzzyBtn = $('fuzzyBtn');
-  const refreshBtn = $('refreshBtn');
-  const loginBtn = $('loginBtn');
+  const q = $("q");
+  const results = $("results");
+  const detail = $("detail");
+  const resultCount = $("resultCount");
+  const searchBtn = $("searchBtn");
+  const fuzzyBtn = $("fuzzyBtn");
+  const clearBtn = $("clearBtn");
+  const loginBtn = $("loginBtn");
+  const themeBtn = $("themeBtn");
+  const compactBtn = $("compactBtn");
+  const sortSelect = $("sortSelect");
+  const pageSize = $("pageSize");
+  const savedViews = $("savedViews");
+  const saveViewBtn = $("saveViewBtn");
+  const recentSearches = $("recentSearches");
+  const pageInfo = $("pageInfo");
+  const prevPage = $("prevPage");
+  const nextPage = $("nextPage");
+  const pinCompareBtn = $("pinCompareBtn");
+  const toggleReadBtn = $("toggleReadBtn");
+  const FILTERS = {
+    all: () => true,
+    usa: r => (r.country || '').toLowerCase() === 'usa',
+    india: r => (r.country || '').toLowerCase() === 'india',
+    hasStory: r => Boolean((r.story || '').trim()),
+    recent: r => state.recentViewed.includes(String(r.id))
+  };
 
-  let allCache = null; // cache for /api/users/all
-
-  function makeItemHtml(u){
-    return `
-      <div class="item" data-id="${u.id}">
-        <img class="photo" src="${u.photo || 'https://i.pravatar.cc/150?u=unknown'}" alt="photo" />
-        <div class="meta">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div><strong>${escapeHtml(u.name)}</strong> — ${escapeHtml(u.city||'')} ${u.country?'- '+escapeHtml(u.country):''}</div>
-            <div class="controls"><button class="view">View</button></div>
-          </div>
-          <div class="story">${escapeHtml(truncate(u.story||'',200))}</div>
-        </div>
-      </div>
-    `;
-  }
+  // ...existing code...
 
   function escapeHtml(s){
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -104,14 +228,7 @@
     return s;
   }
 
-  function renderList(list){
-    if(!list || list.length===0){ results.innerHTML = '<div class="notice">No results</div>'; return }
-    results.innerHTML = list.map(u=>makeItemHtml(u)).join('\n');
-    Array.from(results.querySelectorAll('.item')).forEach(el=>{
-      el.querySelector('.view').addEventListener('click',()=>openDetail(el.dataset.id));
-      el.addEventListener('click', e=>{ if(e.target.classList.contains('view')) return; openDetail(el.dataset.id); });
-    });
-  }
+  // ...existing code...
 
   async function openDetail(id){
     detail.innerHTML = 'Loading...';
