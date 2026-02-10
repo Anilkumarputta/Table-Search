@@ -1,8 +1,7 @@
-# Table Search
+# <img src="assets/logo.svg" alt="Table Search logo" width="56" style="vertical-align:middle;"> Table Search
 
 Professional search cockpit with server full-text search (FTS), fuzzy matching, analytics, and profile tools.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 Table of contents
 - [About](#about)
@@ -29,13 +28,16 @@ Table Search is a data discovery workspace UI for searching, exploring, and prev
 > Place the three screenshot files in `assets/screenshots/` as described above. The markdown below references those files.
 
 Light theme — main listing
-![Light theme - full view](assets/screenshots/screenshot-1.png)
+![Light theme - full view]<img width="1440" height="2000" alt="image" src="https://github.com/user-attachments/assets/672f1eb7-767f-40aa-b8fa-842e92facb5b" />
+
 
 Light theme — single result & profile details
-![Light theme - result detail](assets/screenshots/screenshot-2.png)
+![Light theme - result detail]<img width="1440" height="2000" alt="image" src="https://github.com/user-attachments/assets/2ce0b716-f521-46da-ae5a-71707304357c" />
+
 
 Dark theme
-![Dark theme](assets/screenshots/screenshot-3.png)
+![Dark theme]<img width="1440" height="2000" alt="image" src="https://github.com/user-attachments/assets/e6c73056-aba1-43e8-ab62-311366cbed9a" />
+
 
 ## Features
 
