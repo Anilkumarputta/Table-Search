@@ -224,5 +224,5 @@ This project is licensed under the MIT License — see [LICENSE](./LICENSE) for 
 
 ## Credits
 
-- UI screenshots: provided by the project owner
+- UI screenshots: provided
 - Created by: Anilkumarputta
